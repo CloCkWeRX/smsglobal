@@ -8,35 +8,44 @@ describe 'SmsGlobal' do
       @sender = Sender.new :user => 'DUMMY', :password => 'DUMMY'
     end
 
-    it "requires :user and :password" do
-      expect { Sender.new }.to raise_error(ArgumentError.new('sender is required'))
+    describe '#new' do
+      it "requires :user and :password" do
+        expect { Sender.new }.to raise_error('missing :user')
+        expect { Sender.new(user: 'bob') }.to raise_error('missing :password')
+      end
     end
 
-    it "sends SMS correctly" do
-      stub_sms_ok
-      resp = @sender.send_text('Lorem Ipsum', '12341324', '1234')
-      expect(resp[:status]).to eq :ok
-      expect(resp[:code]).to eq 0
-      expect(resp[:message]).to eq 'Sent queued message ID: 941596d028699601'
-    end
+    describe '#send_text' do
+      it 'requires a from' do
+        expect{@sender.send_text('Lorem Ipsum', '12341324', nil)}.to raise_error('sender is required')
+      end
 
-    it "gracefully fails" do
-      stub_sms_failed
-      resp = @sender.send_text('Lorem Ipsum', '12341324', '1234')
-      expect(resp[:status]).to eq :error
-      expect(resp[:message]).to eq 'Missing parameter: from'
-    end
+      it "sends SMS correctly" do
+        stub_sms_ok
+        resp = @sender.send_text('Lorem Ipsum', '12341324', '1234')
+        expect(resp[:status]).to eq :ok
+        expect(resp[:code]).to eq 0
+        expect(resp[:message]).to eq 'Sent queued message ID: 941596d028699601'
+      end
 
-    it "hits the right URL" do
-      stub_request(:get, 'http://www.smsglobal.com/http-api.php?action=sendsms&from=5678&password=DUMMY&text=xyz&to=1234&user=DUMMY').to_return(:body => 'ERROR: Missing parameter: from')
-      @sender.send_text('xyz', '1234', '5678')
-    end
+      it "gracefully fails" do
+        stub_sms_failed
+        resp = @sender.send_text('Lorem Ipsum', '12341324', '1234')
+        expect(resp[:status]).to eq :error
+        expect(resp[:message]).to eq 'Missing parameter: from'
+      end
 
-    it "gracefully fails on connection error" do
-      stub_request(:get, /www.smsglobal.com.*/).to_return(:status => [500, "Internal Server Error"])
-      resp = @sender.send_text('xyz', '1234', '5678')
-      expect(resp[:status]).to eq :failed
-      expect(resp[:message]).to eq "Unable to reach SMSGlobal"
+      it "hits the right URL" do
+        stub_request(:get, 'http://www.smsglobal.com/http-api.php?action=sendsms&from=5678&password=DUMMY&text=xyz&to=1234&user=DUMMY').to_return(:body => 'ERROR: Missing parameter: from')
+        @sender.send_text('xyz', '1234', '5678')
+      end
+
+      it "gracefully fails on connection error" do
+        stub_request(:get, /www.smsglobal.com.*/).to_return(:status => [500, "Internal Server Error"])
+        resp = @sender.send_text('xyz', '1234', '5678')
+        expect(resp[:status]).to eq :failed
+        expect(resp[:message]).to eq "Unable to reach SMSGlobal"
+      end
     end
 
     context 'with non string values' do

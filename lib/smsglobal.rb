@@ -7,14 +7,15 @@ module SmsGlobal
 
     def initialize(options = {})
       @options = options
-      raise 'missing :user' unless @options[:user]
-      raise 'missing :password' unless @options[:password]
+      raise ArgumentError.new('missing :user') unless @options[:user]
+      raise ArgumentError.new('missing :password') unless @options[:password]
       @options.each {|k,v| @options[k] = v.to_s if v }
       @base = @options[:base] || 'http://www.smsglobal.com/'
     end
 
     def send_text(text, to, sender = nil, send_at = nil)
-      from = sender || @options[:from] || raise ArgumentError.new('sender is required')
+      from = sender || @options[:from]
+      raise ArgumentError.new('sender is required') unless from
       params = {
         :action => 'sendsms',
         :user => @options[:user],

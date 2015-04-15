@@ -35,6 +35,28 @@ describe 'SmsGlobal' do
         expect(resp[:message]).to eq 'Missing parameter: from'
       end
 
+      [{
+        error: "ERROR: 13",
+        expected: "SMSGlobal was unable to contact the carrier"
+      },{
+        error: "ERROR: 402",
+        expected: "Invalid username/password"
+      },{
+        error: "ERROR: 88",
+        expected: "No credits"
+      },{
+        error: "ERROR: 102",
+        expected: "System time out"
+      }].each do |err|
+        it "translates errors: #{err[:error]}" do
+          stub_sms(err[:error])
+
+          resp = @sender.send_text('Lorem Ipsum', '12341324', '1234')
+          expect(resp[:status]).to eq :error
+          expect(resp[:message]).to eq err[:expected]
+        end
+      end
+
       it "hits the right URL" do
         stub_request(:get, 'http://www.smsglobal.com/http-api.php?action=sendsms&from=5678&password=DUMMY&text=xyz&to=1234&user=DUMMY').to_return(:body => 'ERROR: Missing parameter: from')
         @sender.send_text('xyz', '1234', '5678')

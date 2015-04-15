@@ -9,7 +9,7 @@ describe 'SmsGlobal' do
     end
 
     it "requires :user and :password" do
-      expect { Sender.new }.to raise_error
+      expect { Sender.new }.to raise_error(ArgumentError.new('sender is required'))
     end
 
     it "sends SMS correctly" do

@@ -39,6 +39,22 @@ module SmsGlobal
             :id      => $3.to_i
           }
         elsif resp.body =~ /^ERROR: (.+)$/
+          msg = case $1
+          when '402'
+            'Invalid username/password'
+          when '88'
+            'No credits'
+          when '102'
+            'System time out'
+          when '8'
+            'Source or destination is too short'
+          when '401'
+            'Invalid credentials'
+          when '13'
+            'SMSGlobal was unable to contact the carrier'
+          else
+            $1
+          end
           return {
             :status  => :error,
             :message => $1

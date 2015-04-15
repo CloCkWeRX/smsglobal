@@ -57,7 +57,7 @@ module SmsGlobal
           end
           return {
             :status  => :error,
-            :message => $1
+            :message => msg
           }
         else
           raise "Unable to parse response: '#{resp.body}'"
